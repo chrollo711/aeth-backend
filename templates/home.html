@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GPS Tracking Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #map { height: 400px; }
+        .data-card { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">GPS Tracking Dashboard</h1>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">Location Map</div>
+                    <div class="card-body">
+                        <div id="map"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card data-card">
+                    <div class="card-header">Current Data</div>
+                    <div class="card-body">
+                        <div id="current-data">
+                            <p>Loading data...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card data-card">
+                    <div class="card-header">Speed Prediction</div>
+                    <div class="card-body">
+                        <div id="prediction-data">
+                            <p>No prediction available yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">Historical Data</div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Device ID</th>
+                            <th>Timestamp</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Speed (km/h)</th>
+                            <th>Altitude</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table">
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let map;
+        let marker;
+        let historyData = [];
+        
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([0, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        }
+        
+        // Update map with new location
+        function updateMap(lat, lng) {
+            if (!marker) {
+                marker = L.marker([lat, lng]).addTo(map);
+            } else {
+                marker.setLatLng([lat, lng]);
+            }
+            map.setView([lat, lng], 15);
+        }
+        
+        // Format timestamp
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+        
+        // Fetch data from API
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/gps-data/');
+                const data = await response.json();
+                
+                if (data.length > 0) {
+                    // Get latest data point
+                    const latest = data[0];
+                    
+                    // Update current data display
+                    document.getElementById('current-data').innerHTML = `
+                        <p><strong>Device ID:</strong> ${latest.device_id}</p>
+                        <p><strong>Timestamp:</strong> ${formatTimestamp(latest.timestamp)}</p>
+                        <p><strong>Location:</strong> ${latest.latitude}, ${latest.longitude}</p>
+                        <p><strong>Speed:</strong> ${latest.speed} km/h</p>
+                        <p><strong>Altitude:</strong> ${latest.altitude} meters</p>
+                        <p><strong>Satellites:</strong> ${latest.satellites}</p>
+                    `;
+                    
+                    // Update map
+                    updateMap(parseFloat(latest.latitude), parseFloat(latest.longitude));
+                    
+                    // Store for history table
+                    historyData = data;
+                    updateHistoryTable();
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+        
+        // Update history table
+        function updateHistoryTable() {
+            const tableBody = document.getElementById('history-table');
+            tableBody.innerHTML = '';
+            
+            historyData.slice(0, 10).forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.device_id}</td>
+                    <td>${formatTimestamp(item.timestamp)}</td>
+                    <td>${item.latitude}</td>
+                    <td>${item.longitude}</td>
+                    <td>${item.speed}</td>
+                    <td>${item.altitude}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            fetchData();
+            
+            // Refresh data every 5 seconds
+            setInterval(fetchData, 5000);
+        });
+    </script>
+</body>
+</html>

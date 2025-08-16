@@ -4,7 +4,7 @@ services:
     env: python
     plan: free             # or starter, standard, etc.
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn aeth_backend.wsgi:application --bind 0.0.0.0:$PORT
+    startCommand: gunicorn aetheris.wsgi:application --bind 0.0.0.0:$PORT
 
     envVars:
       - key: PYTHON_VERSION

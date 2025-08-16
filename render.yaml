@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: django-backend   # change this to your service name
+    env: python
+    plan: free             # or starter, standard, etc.
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn aeth_backend.wsgi:application --bind 0.0.0.0:$PORT
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10
+      - key: DJANGO_SETTINGS_MODULE
+        value: aetheris.settings   # change this to your Django settings module
+
+databases:
+  - name: postgres-db
+    plan: free

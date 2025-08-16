@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-q9@4cs-$p(ch+fd59)warkq=h2w*bem6*aqr8yscsqzx(@b1vy
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["https://aeth-backend-8.onrender.com"]
+ALLOWED_HOSTS = ["https://aeth-backend-9.onrender.com"]
 
 
 # Application definition
